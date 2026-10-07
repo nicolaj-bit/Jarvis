@@ -1,0 +1,14 @@
+# Hemmeligheder og personlige indstillinger
+.env
+config.toml
+
+# Kørselsdata
+data/
+logs/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
