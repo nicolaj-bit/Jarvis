@@ -1,6 +1,9 @@
 """Hjernen: Claude med værktøjer i en løkke.
 
 Modellen kan kalde flere værktøjer efter hinanden, indtil den har et svar.
+Systemprompten fastlægger sprogsporene: talte svar på engelsk, alt der
+skrives ned på dansk, og navne gengives uændret.
+
 Samtalen holdes "append-only": tidligere beskeder ændres aldrig, de sendes
 tilbage præcis som de kom. Det kræver API'et, for at modellens
 tankeblokke forbliver gyldige, og det gør også prompt-cachen effektiv.
@@ -24,17 +27,31 @@ WEEKDAYS = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søn
 
 SYSTEM_TEMPLATE = """Du er Jarvis, en personlig stemmeassistent for Nicolaj. Du kører på hans Windows-PC.
 
-Alt hvad du skriver, bliver læst højt. Derfor:
-- Svar på dansk, kort og naturligt, som i en samtale. Typisk en til tre sætninger.
-- Ingen markdown, punktopstillinger, tabeller, emojis eller kodeblokke.
-- Læs ikke lange filstier eller filindhold op, medmindre du bliver bedt om det. Opsummér.
-- Brugerens tekst kommer fra talegenkendelse og kan indeholde fejlhørte ord. Gæt fornuftigt, og spørg kort, hvis det er uklart.
+# Sprogregel (fast, gælder altid)
+Nicolaj taler dansk til dig. Forstå det direkte på dansk — oversæt det ikke til engelsk først.
 
-Værktøjer:
+Der er to adskilte spor, og de har hvert sit sprog:
+1. TALT SVAR = ENGELSK. Den tekst, du skriver i dit svar til Nicolaj, bliver læst højt med en engelsk stemme. Den skal altid være på engelsk, også når han taler dansk til dig.
+2. SKRIFTLIGT OUTPUT = DANSK. Alt, hvad du skriver ned gennem et værktøj, skal være på dansk: filer, noter, dokumenter, opsummeringer, commit-beskeder og logfiler.
+
+Når en opgave både giver et talt svar og en fil, holder du sporene adskilt: filen skrives på dansk, og det talte svar om den er på engelsk. Aldrig en engelsk fil, og aldrig et dansk talt svar.
+Eksempel: "Skriv en note om at jeg skal ringe til Peter i morgen" → write_file med indholdet "Ring til Peter i morgen." og det talte svar "Done, I've saved a note to call Peter tomorrow."
+
+# Navne oversættes aldrig
+Egennavne, filnavne, mappenavne og danske produktnavne gengives præcis som de er — i tale og på skrift. Oversæt, forkort eller omskriv dem aldrig, heller ikke midt i en engelsk sætning.
+Eksempel: "I've opened Indkøbsliste.txt in the folder Opskrifter." — ikke "Shopping list.txt" eller "the recipes folder". Det samme gælder for f.eks. Club No Sleep og LALATOTO.
+
+# Talte svar
+- Kort og naturligt, som i en samtale. Typisk en til tre sætninger.
+- Ingen markdown, punktopstillinger, tabeller, emojis eller kodeblokke.
+- Læs ikke lange filstier eller filindhold op, medmindre du bliver bedt om det. Opsummér på engelsk.
+- Nicolajs tekst kommer fra talegenkendelse og kan indeholde fejlhørte ord. Gæt fornuftigt, og spørg kort (på engelsk), hvis det er uklart.
+
+# Værktøjer
 - Du kan læse, skrive, liste og søge i filer, men kun i disse mapper:
 {allowed_dirs}
 - Du kan åbne filer i de mapper og starte disse programmer: {programs}.
-- Overskrivning af en eksisterende fil kræver brugerens ja. Værktøjet spørger selv brugeren, så du skal ikke spørge først. Sig ja-eller-nej-resultatet videre, hvis det blev et nej.
+- Overskrivning af en eksisterende fil kræver Nicolajs ja. Værktøjet spørger ham selv, så du skal ikke spørge først. Siger han nej, så fortæl det kort.
 - Du kan ikke slette filer, sende beskeder eller gå på nettet. Sig det ærligt, hvis du bliver bedt om det.
 
 I dag er {weekday} den {today}. Samtalen nedenfor er fra i dag."""
@@ -126,20 +143,20 @@ class Brain:
             reply = self._run_loop(new)
         except anthropic.AuthenticationError:
             audit("API_ERROR", error="authentication")
-            return "Min API-nøgle virker ikke. Tjek ANTHROPIC_API_KEY i .env-filen."
+            return "My API key isn't working. Please check ANTHROPIC_API_KEY in the .env file."
         except anthropic.RateLimitError:
             audit("API_ERROR", error="rate_limit")
-            return "Jeg bliver bremset af Anthropic lige nu. Prøv igen om lidt."
+            return "Anthropic is rate limiting me right now. Please try again in a moment."
         except anthropic.APIConnectionError:
             audit("API_ERROR", error="connection")
-            return "Jeg kan ikke få forbindelse til Anthropic. Er der internet?"
+            return "I can't reach Anthropic. Are we online?"
         except anthropic.APIStatusError as exc:
             audit("API_ERROR", status=exc.status_code, error=str(exc.message))
-            return "Der skete en fejl hos Anthropic. Detaljerne står i logfilen."
+            return "Something went wrong on Anthropic's side. The details are in the log file."
 
         if reply is None:
             # Afvisning: turen gemmes ikke, så historikken forbliver gyldig.
-            return "Det kan jeg desværre ikke hjælpe med."
+            return "Sorry, I can't help with that."
 
         self.memory.save_turn(new, self.day)
         self.history.extend(new)
@@ -159,11 +176,11 @@ class Brain:
                 return None
 
             if not content:
-                content = [{"type": "text", "text": "Jeg har ikke noget svar."}]
+                content = [{"type": "text", "text": "I don't have an answer."}]
             new.append({"role": "assistant", "content": content})
 
             if response.stop_reason != "tool_use":
-                return _text_of(content) or "Færdig."
+                return _text_of(content) or "Done."
 
             results = []
             for block in content:
@@ -180,7 +197,7 @@ class Brain:
                 audit("TOOL_LIMIT", rounds=rounds)
                 results.append({
                     "type": "text",
-                    "text": "Grænsen for værktøjskald er nået. Svar brugeren nu med det, du ved.",
+                    "text": "Grænsen for værktøjskald er nået. Svar Nicolaj nu på engelsk med det, du ved.",
                 })
                 new.append({"role": "user", "content": results})
                 final = self._create(self.history + new, tool_choice={"type": "none"})
@@ -188,6 +205,6 @@ class Brain:
                 if final.stop_reason == "refusal" or not final_content:
                     return None
                 new.append({"role": "assistant", "content": final_content})
-                return _text_of(final_content) or "Jeg nåede ikke at blive færdig."
+                return _text_of(final_content) or "I didn't manage to finish."
 
             new.append({"role": "user", "content": results})

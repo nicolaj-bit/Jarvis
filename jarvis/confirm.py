@@ -1,5 +1,7 @@
 """Bekræftelse med stemmen: Jarvis siger, hvad den vil gøre, og du svarer ja.
 
+Spørgsmålet stilles på engelsk (talt spor). Svaret må være dansk eller engelsk.
+
 Alt andet end et klart ja — nej, tavshed, noget uforståeligt — er et nej.
 """
 
@@ -10,9 +12,10 @@ from typing import Callable
 
 from .audit import audit
 
-YES_WORDS = {"ja", "jo", "jep", "javel", "jaja", "yes"}
-YES_PHRASES = ("gør det", "bare gør det", "det må du gerne", "kør på")
-NO_WORDS = {"nej", "ikke", "nope", "no", "stop", "vent", "fortryd", "annuller", "lad"}
+YES_WORDS = {"ja", "jo", "jep", "javel", "jaja", "yes", "yeah", "yep", "sure"}
+YES_PHRASES = ("gør det", "bare gør det", "det må du gerne", "kør på", "go ahead", "do it")
+NO_WORDS = {"nej", "ikke", "nope", "no", "not", "don", "dont", "stop", "vent", "wait",
+            "fortryd", "annuller", "cancel", "lad"}
 
 
 def is_yes(answer: str) -> bool:
@@ -38,10 +41,10 @@ class VoiceConfirmer:
 
     def __call__(self, question: str) -> bool:
         audit("CONFIRM_ASK", question=question)
-        self.speak(f"{question} Hold tasten nede og svar ja eller nej.")
+        self.speak(f"{question} Hold the key and answer yes or no.")
         answer = self.listen(self.timeout)
         approved = bool(answer) and is_yes(answer)
         audit("CONFIRM_ANSWER", heard=answer, approved=approved)
         if not approved:
-            self.speak("Okay, jeg lader være.")
+            self.speak("Okay, I won't.")
         return approved

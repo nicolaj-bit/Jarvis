@@ -59,14 +59,15 @@ TOOL_DEFINITIONS: list[dict] = [
     {
         "name": "write_file",
         "description": (
-            "Skriv tekst til en fil i en tilladt mappe. Findes filen i forvejen, "
-            "bliver brugeren spurgt, før den overskrives. Mangler mapper, oprettes de."
+            "Skriv tekst til en fil i en tilladt mappe. Indholdet skal være på "
+            "dansk. Findes filen i forvejen, bliver brugeren spurgt, før den "
+            "overskrives. Mangler mapper, oprettes de."
         ),
         "input_schema": {
             "type": "object",
             "properties": {
                 "path": {"type": "string", "description": "Sti til filen."},
-                "content": {"type": "string", "description": "Hele filens nye indhold."},
+                "content": {"type": "string", "description": "Hele filens nye indhold, på dansk."},
             },
             "required": ["path", "content"],
             "additionalProperties": False,
@@ -232,7 +233,8 @@ class Toolbox:
         if file.is_dir():
             raise ToolError(f"{file} er en mappe, ikke en fil.")
         if file.exists():
-            question = f"Filen {file.name} findes allerede. Skal jeg overskrive den?"
+            # Talt spor: engelsk. Filnavnet gengives uændret.
+            question = f"The file {file.name} already exists. Should I overwrite it?"
             if not self.confirm(question):
                 raise ToolError(
                     "Brugeren sagde ikke ja. Filen blev IKKE overskrevet."

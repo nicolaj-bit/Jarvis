@@ -36,9 +36,9 @@ class Config:
     max_tool_rounds: int = 15
 
     tts_engine: str = "local"
-    tts_local_voice: str = "da"
+    tts_local_voice_id: str = "TTS_MS_EN-US_ZIRA_11.0"
     tts_local_rate: int = 185
-    elevenlabs_voice_id: str = ""
+    elevenlabs_voice_id: str = "21m00Tcm4TlvDq8ikWAM"
     elevenlabs_model_id: str = "eleven_multilingual_v2"
 
     allowed_dirs: list[Path] = field(default_factory=list)
@@ -88,7 +88,7 @@ def load_config(path: Path | None = None) -> Config:
         min_seconds=float(audio.get("min_seconds", d.min_seconds)),
         input_device=_device(audio.get("input_device")),
         stt_model=stt.get("model", d.stt_model),
-        stt_language=stt.get("language", d.stt_language),
+        stt_language=str(stt.get("language") or d.stt_language).strip() or d.stt_language,
         stt_device=stt.get("device", d.stt_device),
         stt_compute_type=stt.get("compute_type", d.stt_compute_type),
         stt_beam_size=int(stt.get("beam_size", d.stt_beam_size)),
@@ -97,9 +97,9 @@ def load_config(path: Path | None = None) -> Config:
         brain_max_tokens=int(brain.get("max_tokens", d.brain_max_tokens)),
         max_tool_rounds=int(brain.get("max_tool_rounds", d.max_tool_rounds)),
         tts_engine=tts.get("engine", d.tts_engine),
-        tts_local_voice=tts_local.get("voice", d.tts_local_voice),
+        tts_local_voice_id=tts_local.get("voice_id") or d.tts_local_voice_id,
         tts_local_rate=int(tts_local.get("rate", d.tts_local_rate)),
-        elevenlabs_voice_id=tts_eleven.get("voice_id", d.elevenlabs_voice_id),
+        elevenlabs_voice_id=tts_eleven.get("voice_id") or d.elevenlabs_voice_id,
         elevenlabs_model_id=tts_eleven.get("model_id", d.elevenlabs_model_id),
         allowed_dirs=[Path(p).expanduser() for p in files.get("allowed_dirs", [])],
         max_file_kb=int(files.get("max_file_kb", d.max_file_kb)),

@@ -85,7 +85,7 @@ def test_new_day_starts_fresh(tmp_path):
 
 def test_refusal_not_saved(tmp_path):
     brain, _, memory = make_brain(tmp_path, [resp("refusal")])
-    assert "ikke hjælpe" in brain.ask("noget")
+    assert "can't help" in brain.ask("noget")
     assert brain.history == [] and memory.load_day(date(2026, 10, 7)) == []
 
 

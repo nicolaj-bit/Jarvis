@@ -15,7 +15,7 @@ def create_tts(config) -> TextToSpeech:
     if engine == "local":
         from .local import LocalTTS
 
-        return LocalTTS(voice=config.tts_local_voice, rate=config.tts_local_rate)
+        return LocalTTS(voice_id=config.tts_local_voice_id, rate=config.tts_local_rate)
     if engine == "elevenlabs":
         from .elevenlabs import ElevenLabsTTS
 
