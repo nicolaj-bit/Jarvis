@@ -8,6 +8,22 @@ oplæsning af svaret.
 Hold Ctrl+Alt+J  →  optagelse  →  faster-whisper (lokalt)  →  Claude + værktøjer  →  oplæsning
 ```
 
+## Sprog
+
+| Spor                 | Sprog   |
+|----------------------|---------|
+| Det du siger         | Dansk — tale til tekst er låst til dansk |
+| Det Jarvis siger     | Engelsk, med en engelsk stemme |
+| Det Jarvis skriver   | Dansk: filer, noter, dokumenter, opsummeringer, commit-beskeder, logfiler |
+
+De to spor holdes adskilt. Beder du om en note, bliver filen skrevet på
+dansk, mens Jarvis svarer på engelsk, at den er gemt. Egennavne, filnavne,
+mappenavne og danske produktnavne bliver aldrig oversat, hverken i tale
+eller på skrift.
+
+Bemærk: En engelsk stemme udtaler danske navne med engelsk accent. Navnet
+bliver gengivet korrekt, men lyder ikke dansk.
+
 Jarvis lever som et lille rundt ikon i proceslinjen. Farven viser, hvad den laver:
 
 | Farve  | Tilstand                              |
@@ -40,11 +56,20 @@ pip install -r requirements.txt
 Får du en fejl om «running scripts is disabled», så kør først
 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` og prøv igen.
 
-### Dansk stemme til oplæsningen
+### Engelsk stemme til oplæsningen
 
-Den lokale oplæsning bruger Windows' egne stemmer. For at få dansk:
-**Indstillinger → Tid og sprog → Tale → Tilføj stemmer → Dansk**.
-Uden en dansk stemme læser Jarvis op med den engelske standardstemme.
+Den lokale oplæsning bruger Windows' egne stemmer, og standarden er
+**Microsoft Zira** (amerikansk engelsk). På en dansk Windows er den ikke
+altid installeret. Tilføj den under
+**Indstillinger → Tid og sprog → Tale → Tilføj stemmer → English (United States)**.
+
+Se, hvilke stemmer der er installeret, og hvad deres id er:
+
+```powershell
+python -m jarvis --list-voices
+```
+
+Kopiér id'et ind i `voice_id` under `[tts.local]` for at skifte stemme.
 
 ---
 
@@ -73,7 +98,7 @@ push_to_talk = "ctrl+alt+j"
 
 [stt]
 model = "large-v3-turbo"   # skift model her
-language = "da"
+language = "da"             # det sprog, du taler. Standard: dansk
 
 [brain]
 model = "claude-opus-5-5"
@@ -82,8 +107,11 @@ effort = "medium"           # low = hurtigere svar, high = mere grundig
 [tts]
 engine = "local"            # eller "elevenlabs"
 
+[tts.local]
+voice_id = "TTS_MS_EN-US_ZIRA_11.0"   # engelsk Windows-stemme
+
 [tts.elevenlabs]
-voice_id = ""               # stemme-id fra din ElevenLabs-konto
+voice_id = "21m00Tcm4TlvDq8ikWAM"     # "Rachel", engelsk. Skift til dit eget id
 
 [files]
 # Filværktøjerne må KUN arbejde i disse mapper. Alt andet afvises.
@@ -120,6 +148,7 @@ Vil du starte uden konsolvindue, så brug `pythonw -m jarvis`.
 ```powershell
 python -m jarvis --test-stt    # optag og mål hvor hurtig tale til tekst er
 python -m jarvis --test-tts    # hør oplæsningen
+python -m jarvis --list-voices # vis Windows-stemmer og deres id
 python -m jarvis --console     # skriv til Jarvis i stedet for at tale
 ```
 

@@ -142,7 +142,7 @@ class VoiceApp:
             except Exception as exc:  # noqa: BLE001 - én fejl må ikke lukke Jarvis
                 log.exception("Fejl under behandling")
                 audit("ERROR", error=repr(exc))
-                self.speak("Der skete en fejl. Detaljerne står i logfilen.")
+                self.speak("Something went wrong. The details are in the log file.")
             finally:
                 self.set_state("idle")
 
@@ -251,4 +251,11 @@ def run_tts_test() -> None:
     config = _bootstrap()
     tts = create_tts(config)
     print(f"Tester oplæsning med '{tts.name}' …")
-    tts.speak("Hej Nicolaj. Det her er Jarvis. Kan du høre mig tydeligt?")
+    tts.speak("Hi Nicolaj, this is Jarvis. Can you hear me clearly?")
+
+
+def run_list_voices() -> None:
+    from .tts.local import list_voices
+
+    for voice in list_voices():
+        print(f"{voice.name}\n    voice_id = \"{voice.id.rsplit(chr(92), 1)[-1]}\"\n")

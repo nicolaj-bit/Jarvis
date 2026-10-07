@@ -4,6 +4,7 @@
     python -m jarvis --console    skriv i stedet for at tale
     python -m jarvis --test-stt   mål hvor hurtigt tale til tekst er
     python -m jarvis --test-tts   test oplæsningen
+    python -m jarvis --list-voices  vis Windows-stemmer og deres id
 """
 
 import argparse
@@ -17,6 +18,7 @@ def main() -> None:
     mode.add_argument("--console", action="store_true", help="skriv i stedet for at tale")
     mode.add_argument("--test-stt", action="store_true", help="mål tale til tekst på denne maskine")
     mode.add_argument("--test-tts", action="store_true", help="test oplæsningen")
+    mode.add_argument("--list-voices", action="store_true", help="vis Windows-stemmer og deres id")
     args = parser.parse_args()
 
     if args.console:
@@ -25,6 +27,8 @@ def main() -> None:
         app.run_stt_test()
     elif args.test_tts:
         app.run_tts_test()
+    elif args.list_voices:
+        app.run_list_voices()
     else:
         app.run_voice()
 

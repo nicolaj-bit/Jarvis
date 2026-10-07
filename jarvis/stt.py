@@ -8,6 +8,8 @@ import numpy as np
 
 from .audit import audit
 
+DEFAULT_LANGUAGE = "da"
+
 
 class SpeechToText:
     def __init__(
@@ -25,7 +27,9 @@ class SpeechToText:
             compute_type = "default"  # int8 på processor, float16 på grafikkort
         self.model = WhisperModel(model, device=device, compute_type=compute_type)
         self.model_name = model
-        self.language = language
+        # Sproget sættes altid eksplicit. Uden det gætter Whisper selv og
+        # falder ofte over i engelsk på korte danske sætninger.
+        self.language = (language or "").strip() or DEFAULT_LANGUAGE
         self.beam_size = beam_size
         audit("STT_LOADED", model=model, seconds=round(time.perf_counter() - started, 2))
 

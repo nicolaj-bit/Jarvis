@@ -17,6 +17,8 @@ input_device = ""
 # faster-whisper-model. Muligheder bl.a.: "small", "medium", "large-v3",
 # "large-v3-turbo". Større = bedre dansk, men langsommere.
 model = "large-v3-turbo"
+# Sproget du taler. Låst til dansk som standard, så Whisper ikke selv
+# gætter og falder over i engelsk. Tom værdi = dansk.
 language = "da"
 # "auto" bruger grafikkortet (CUDA), hvis det findes, ellers processoren.
 device = "auto"
@@ -33,17 +35,22 @@ max_tokens = 16000
 max_tool_rounds = 15
 
 [tts]
+# Jarvis svarer på engelsk, så begge motorer bruger en engelsk stemme.
 # "local" (Windows' indbyggede stemmer, ingen konto) eller "elevenlabs".
 engine = "local"
 
 [tts.local]
-# Del af stemmens navn eller sprogkode. Kræver at en dansk stemme er
-# installeret i Windows (Indstillinger > Tid og sprog > Tale).
-voice = "da"
+# Windows-stemmens id. Hele id'et eller et stykke af det, f.eks. "ZIRA",
+# "DAVID" eller "EN-GB_HAZEL". Kør  python -m jarvis --list-voices  for at se
+# de stemmer, der er installeret. Findes stemmen ikke, bruges en anden
+# engelsk stemme.
+voice_id = "TTS_MS_EN-US_ZIRA_11.0"
 rate = 185
 
 [tts.elevenlabs]
-voice_id = ""
+# Stemme-id fra ElevenLabs (Voice Library > stemmen > "ID").
+# Standard er "Rachel", en engelsk stemme.
+voice_id = "21m00Tcm4TlvDq8ikWAM"
 model_id = "eleven_multilingual_v2"
 
 [files]
